@@ -595,8 +595,28 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+
     <script>
-        const presentations = JSON.parse(localStorage.getItem('presentations')) || [];
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLtoQKtvxB6Solk5rrriMG39u_2S6medzQ",
+            authDomain: "dashboard-totes-ia.firebaseapp.com",
+            databaseURL: "https://dashboard-totes-ia-default-rtdb.firebaseio.com",
+            projectId: "dashboard-totes-ia",
+            storageBucket: "dashboard-totes-ia.firebasestorage.app",
+            messagingSenderId: "845874247365",
+            appId: "1:845874247365:web:dcbd5ba8e9e806bc9522ac",
+            measurementId: "G-BY1G8TTGNB"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let presentations = [];
         let currentRole = localStorage.getItem('userRole') || null;
 
         function choosePresenter() {
@@ -640,7 +660,6 @@
             }
 
             const presentation = {
-                id: Date.now(),
                 name,
                 title,
                 description,
@@ -651,13 +670,14 @@
                 createdAt: new Date().toLocaleString('pt-BR')
             };
 
-            presentations.push(presentation);
-            localStorage.setItem('presentations', JSON.stringify(presentations));
-
-            resetForm();
-            renderPresentations();
-            showToast('Apresentação inscrita com sucesso! ✨');
-            updateStats();
+            // Salvar no Firebase
+            const newPresentationRef = database.ref('presentations').push();
+            newPresentationRef.set(presentation).then(() => {
+                resetForm();
+                showToast('Apresentação inscrita com sucesso! ✨');
+            }).catch((error) => {
+                alert('Erro ao salvar: ' + error.message);
+            });
         }
 
         function renderPresentations() {
@@ -720,6 +740,21 @@
             }, 3500);
         }
 
+        // Carregar apresentações do Firebase em tempo real
+        function loadPresentations() {
+            database.ref('presentations').on('value', (snapshot) => {
+                presentations = [];
+                const data = snapshot.val();
+                if (data) {
+                    Object.values(data).forEach((presentation) => {
+                        presentations.push(presentation);
+                    });
+                }
+                renderPresentations();
+                updateStats();
+            });
+        }
+
         // Initialize
         if (currentRole === 'presenter') {
             choosePresenter();
@@ -727,8 +762,7 @@
             chooseViewer();
         }
 
-        renderPresentations();
-        updateStats();
+        loadPresentations();
     </script>
 </body>
 </html>

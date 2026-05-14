@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda IA - TOTVS iPaaS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* MODAL INICIAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 34, 51, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 30px 80px rgba(0, 34, 51, 0.2);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-icon {
+            font-size: 60px;
+            color: #00c9eb;
+            margin-bottom: 20px;
+        }
+
+        .modal-content h2 {
+            font-size: 28px;
+            color: #002233;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-btn {
+            padding: 14px 36px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .modal-btn-yes {
+            background: #00c9eb;
+            color: #002233;
+        }
+
+        .modal-btn-yes:hover {
+            background: #009bb3;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 201, 235, 0.3);
+        }
+
+        .modal-btn-no {
+            background: #f0f0f0;
+            color: #666;
+            border: 2px solid #e8eef5;
+        }
+
+        .modal-btn-no:hover {
+            background: white;
+            border-color: #002233;
+            color: #002233;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #002233 0%, #004d66 100%);
+            border-radius: 20px;
+            padding: 50px 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0, 34, 51, 0.15);
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(0, 201, 235, 0.1);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .totvs-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .totvs-logo {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+        }
+
+        .totvs-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .header h1 {
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 15px;
+        }
+
+        .header-meta {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .meta-item i {
+            font-size: 18px;
+            color: #00c9eb;
+        }
+
+        /* STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px 28px;
+            box-shadow: 0 8px 24px rgba(0, 34, 51, 0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+            border-top: 4px solid #00c9eb;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 40px rgba(0, 201, 235, 0.15);
+        }
+
+        .stat-icon {
+            font-size: 36px;
+            margin-bottom: 14px;
+            color: #00c9eb;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .stat-number {
+            font-size: 40px;
+            font-weight: 700;
+            color: #002233;
+        }
+
+        /* FORM */
+        .form-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 24px rgba(0, 34, 51, 0.08);
+            border-top: 5px solid #00c9eb;
+        }
+
+        .form-section.hidden {
+            display: none;
+        }
+
+        .form-section h2 {
+            font-size: 26px;
+            color: #002233;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+        }
+
+        .form-section h2 i {
+            color: #00c9eb;
+            font-size: 28px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e8eef5;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: #f8fafb;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            background: white;
+            border-color: #00c9eb;
+            box-shadow: 0 0 0 4px rgba(0, 201, 235, 0.1);
+        }
+
+        textarea {
+            grid-column: 1 / -1;
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 13px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: #00c9eb;
+            color: #002233;
+            border: 2px solid #00c9eb;
+        }
+
+        .btn-primary:hover {
+            background: #009bb3;
+            border-color: #009bb3;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 201, 235, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 2px solid #e8eef5;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafb;
+            border-color: #002233;
+            color: #002233;
+        }
+
+        /* LISTA DE APRESENTAÇÕES */
+        .presentations-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 24px rgba(0, 34, 51, 0.08);
+            border-top: 5px solid #00c9eb;
+        }
+
+        .presentations-section h2 {
+            font-size: 26px;
+            color: #002233;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+        }
+
+        .presentations-section h2 i {
+            color: #00c9eb;
+            font-size: 28px;
+        }
+
+        .presentations-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .presentation-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            border: 2px solid #e8eef5;
+            border-left: 5px solid #00c9eb;
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s ease forwards;
+            opacity: 0;
+            position: relative;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .presentation-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 40px rgba(0, 201, 235, 0.15);
+            border-color: #00c9eb;
+        }
+
+        .presentation-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #00c9eb;
+            color: #002233;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .presentation-card h3 {
+            font-size: 18px;
+            color: #002233;
+            margin-bottom: 12px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .presentation-card .presenter {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .presentation-card .presenter i {
+            color: #00c9eb;
+        }
+
+        .presentation-card .description {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e8f7fb;
+            color: #002233;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #00c9eb;
+        }
+
+        .tag.ia-type {
+            background: #f0e8fb;
+            border-color: #764ba2;
+            color: #5a3680;
+        }
+
+        .presentation-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 13px;
+            color: #999;
+            padding-top: 14px;
+            border-top: 1px solid #e8eef5;
+        }
+
+        .duration-badge {
+            background: #e8f7fb;
+            color: #002233;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            border: 1px solid #00c9eb;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #e8eef5;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            color: #999;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #00c9eb;
+            color: #002233;
+            padding: 16px 28px;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(0, 201, 235, 0.3);
+            animation: slideUpToast 0.3s ease;
+            z-index: 1000;
+            font-weight: 600;
+        }
+
+        @keyframes slideUpToast {
+            from {
+                transform: translateY(120px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            .header {
+                padding: 32px 24px;
+            }
+
+            .header-title {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .header-meta {
+                gap: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .presentations-list {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                justify-content: stretch;
+            }
+
+            .form-actions button {
+                flex: 1;
+            }
+
+            .modal-content {
+                padding: 32px 24px;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .modal-btn {
+                width: 100%;
+            }
+
+            .totvs-logo {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 24px 16px;
+                margin-bottom: 24px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 16px;
+            }
+
+            .form-section, .presentations-section {
+                padding: 24px 16px;
+            }
+
+            .stat-card {
+                padding: 20px 16px;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .modal-content {
+                padding: 24px 16px;
+            }
+
+            .modal-content h2 {
+                font-size: 22px;
+            }
+
+            .totvs-logo {
+                width: 45px;
+                height: 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- MODAL INICIAL -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">🎤</div>
+            <h2>Você vai compartilhar uma experiência?</h2>
+            <p>Escolha se deseja inscrever uma apresentação ou apenas visualizar as experiências do time</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-yes" onclick="chooseYes()">
+                    <i class="fas fa-check"></i> Sim, vou compartilhar
+                </button>
+                <button class="modal-btn modal-btn-no" onclick="chooseNo()">
+                    <i class="fas fa-eye"></i> Não, vou assistir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="totvs-logo-container">
+                        <div class="totvs-logo">
+                            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Símbolo TOTVS -->
+                                <rect x="12" y="16" width="40" height="32" rx="8" fill="none" stroke="white" stroke-width="3"/>
+                                <path d="M 24 32 L 40 32 M 28 28 L 36 28 M 28 36 L 36 36" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h1>TOTVS iPaaS</h1>
+                    </div>
+                </div>
+                <p>Agenda de Compartilhamento de Experiências com IA</p>
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-brain"></i>
+                        <span>Inteligência Artificial</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-laptop-code"></i>
+                        <span>Desenvolvimento</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-presentation"></i></div>
+                <div class="stat-label">Apresentações</div>
+                <div class="stat-number" id="stat-count">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-label">Tempo Total</div>
+                <div class="stat-number" id="stat-time">0m</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-label">Apresentadores</div>
+                <div class="stat-number" id="stat-presenters">0</div>
+            </div>
+        </div>
+
+        <!-- FORM -->
+        <div id="form-section" class="form-section hidden">
+            <h2><i class="fas fa-edit"></i> Inscreva sua apresentação</h2>
+            <div class="form-grid">
+                <input type="text" id="presenter-name" placeholder="Seu nome completo" required>
+                <input type="text" id="presentation-title" placeholder="Tema/Título da apresentação" required>
+
+                <div class="form-group">
+                    <label for="duration">⏱️ Duração estimada (minutos)</label>
+                    <input type="number" id="duration" placeholder="Ex: 15, 20, 30" min="5" max="60" value="15">
+                </div>
+
+                <select id="ia-category" required>
+                    <option value="">Selecione a Categoria de IA</option>
+                    <option value="IA Generativa">IA Generativa (ChatGPT, Claude, etc)</option>
+                    <option value="Automação">Automação (RPA, Workflows)</option>
+                    <option value="Machine Learning">Machine Learning (Previsões, Modelos)</option>
+                    <option value="Análise de Dados">Análise de Dados (BI, Data Analytics)</option>
+                    <option value="Visão Computacional">Visão Computacional (OCR, Reconhecimento)</option>
+                    <option value="PLN">Processamento de Linguagem Natural (NLP)</option>
+                    <option value="Outra">Outra</option>
+                </select>
+                <input type="text" id="ia-tool" placeholder="Qual IA foi utilizada? (ex: ChatGPT, Copilot, etc)">
+
+                <textarea id="description" placeholder="Descrição breve do que você vai apresentar (2-3 linhas)"></textarea>
+                <textarea id="observations" placeholder="Observações adicionais (opcional)"></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="resetForm()"><i class="fas fa-times"></i> Limpar</button>
+                <button class="btn-primary" onclick="addPresentation()"><i class="fas fa-plus"></i> Inscrever</button>
+            </div>
+        </div>
+
+        <!-- PRESENTATIONS LIST -->
+        <div class="presentations-section">
+            <h2><i class="fas fa-list"></i> Apresentações inscritas</h2>
+            <div id="presentations-container" class="presentations-list">
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <i class="fas fa-inbox"></i>
+                    <p>Nenhuma apresentação inscrita ainda. Seja o primeiro! 🎯</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const presentations = JSON.parse(localStorage.getItem('presentations')) || [];
+
+        function chooseYes() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('form-section').classList.remove('hidden');
+            document.getElementById('presenter-name').focus();
+            localStorage.setItem('userChoice', 'presenter');
+        }
+
+        function chooseNo() {
+            document.getElementById('modal').classList.add('hidden');
+            localStorage.setItem('userChoice', 'viewer');
+        }
+
+        function updateStats() {
+            const count = presentations.length;
+            const totalTime = presentations.reduce((sum, p) => sum + parseInt(p.duration), 0);
+            const uniquePresenters = new Set(presentations.map(p => p.name)).size;
+
+            document.getElementById('stat-count').textContent = count;
+            document.getElementById('stat-time').textContent = totalTime + 'm';
+            document.getElementById('stat-presenters').textContent = uniquePresenters;
+        }
+
+        function addPresentation() {
+            const name = document.getElementById('presenter-name').value.trim();
+            const title = document.getElementById('presentation-title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const duration = document.getElementById('duration').value || '15';
+            const iaCategory = document.getElementById('ia-category').value;
+            const iaTool = document.getElementById('ia-tool').value.trim();
+            const observations = document.getElementById('observations').value.trim();
+
+            if (!name || !title || !description || !iaCategory || !iaTool) {
+                alert('Preencha todos os campos obrigatórios');
+                return;
+            }
+
+            const presentation = {
+                id: Date.now(),
+                name,
+                title,
+                description,
+                duration,
+                iaCategory,
+                iaTool,
+                observations,
+                createdAt: new Date().toLocaleString('pt-BR')
+            };
+
+            presentations.push(presentation);
+            localStorage.setItem('presentations', JSON.stringify(presentations));
+
+            resetForm();
+            renderPresentations();
+            showToast('Apresentação inscrita com sucesso! ✨');
+            updateStats();
+        }
+
+        function renderPresentations() {
+            const container = document.getElementById('presentations-container');
+
+            if (presentations.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="fas fa-inbox"></i>
+                        <p>Nenhuma apresentação inscrita ainda. Seja o primeiro! 🎯</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = presentations.map((p, index) => {
+                return `
+                    <div class="presentation-card" style="animation-delay: ${index * 0.08}s">
+                        <div class="presentation-number">${index + 1}</div>
+                        <h3>${p.title}</h3>
+                        <div class="presenter">
+                            <i class="fas fa-user-circle"></i>
+                            ${p.name}
+                        </div>
+                        <div class="tags-container">
+                            <span class="tag ia-type">${p.iaCategory}</span>
+                            <span class="tag">${p.iaTool}</span>
+                        </div>
+                        <div class="description">${p.description}</div>
+                        <div class="presentation-meta">
+                            <div class="duration-badge">
+                                <i class="fas fa-hourglass-half"></i>
+                                ~${p.duration} min
+                            </div>
+                        </div>
+                        ${p.observations ? `<div style="font-size: 13px; color: #666; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e8eef5;"><strong>Observação:</strong> ${p.observations}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function resetForm() {
+            document.getElementById('presenter-name').value = '';
+            document.getElementById('presentation-title').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('duration').value = '15';
+            document.getElementById('ia-category').value = '';
+            document.getElementById('ia-tool').value = '';
+            document.getElementById('observations').value = '';
+            document.getElementById('presenter-name').focus();
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3500);
+        }
+
+        // Initialize
+        const userChoice = localStorage.getItem('userChoice');
+        if (userChoice === 'presenter') {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('form-section').classList.remove('hidden');
+        } else if (userChoice === 'viewer') {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        renderPresentations();
+        updateStats();
+    </script>
+</body>
+</html>

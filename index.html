@@ -305,6 +305,28 @@
             opacity: 0;
             position: relative;
         }
+        .btn-delete {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #fff0f0;
+            color: #e74c3c;
+            border: 1px solid #fdd;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .btn-delete:hover {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+            transform: scale(1.1);
+        }
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -595,9 +617,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    <!-- Firebase SDK (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
     <script>
         // Firebase Configuration
@@ -696,6 +718,9 @@
             container.innerHTML = presentations.map((p, index) => {
                 return `
                     <div class="presentation-card" style="animation-delay: ${index * 0.08}s">
+                        <button class="btn-delete" onclick="deletePresentation('${p.key}')" title="Excluir apresentação">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                         <div class="presentation-number">${index + 1}</div>
                         <h3>${p.title}</h3>
                         <div class="presenter">
@@ -740,14 +765,23 @@
             }, 3500);
         }
 
+        function deletePresentation(key) {
+            if (!confirm('Tem certeza que deseja excluir esta apresentação?')) return;
+            database.ref('presentations/' + key).remove().then(() => {
+                showToast('Apresentação excluída! 🗑️');
+            }).catch((error) => {
+                alert('Erro ao excluir: ' + error.message);
+            });
+        }
+
         // Carregar apresentações do Firebase em tempo real
         function loadPresentations() {
             database.ref('presentations').on('value', (snapshot) => {
                 presentations = [];
                 const data = snapshot.val();
                 if (data) {
-                    Object.values(data).forEach((presentation) => {
-                        presentations.push(presentation);
+                    Object.entries(data).forEach(([key, presentation]) => {
+                        presentations.push({ ...presentation, key });
                     });
                 }
                 renderPresentations();
